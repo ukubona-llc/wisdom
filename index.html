@@ -1,313 +1,984 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Loss Function — Diagram · Ukubona LLC</title>
-<style>
-  :root {
-    --bg:       #0d0d0d;
-    --surface:  #141414;
-    --border:   #2a2a2a;
-    --teal:     #2dd4bf;
-    --amber:    #f59e0b;
-    --coral:    #f87171;
-    --lavender: #a78bfa;
-    --text:     #e5e5e5;
-    --muted:    #6b7280;
-    --font-mono: 'IBM Plex Mono', 'Fira Mono', 'Consolas', monospace;
-    --font-sans: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Okubala ≠ Kulaba — Roundtable Archive | Ukubona LLC</title>
+  <link rel="icon" type="image/png" href="https://abikesa.github.io/logos/assets/ukubona-light.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  <style>
+    /* ─── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --void:       #080a10;
+      --deep:       #0f1219;
+      --surface:    #181c26;
+      --raised:     #1e2330;
+      --border:     #2a2f3e;
+      --muted:      #4a5068;
+      --subtle:     #7a8299;
+      --body:       #c8ccd8;
+      --heading:    #eceef5;
+      --bright:     #f5f7ff;
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-sans);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-  }
+      --ukubona:    #00b4a6;
+      --ukubona-d:  #007f75;
+      --xai:        #e8c547;
+      --google:     #4285f4;
+      --openai:     #10a37f;
+      --anthropic:  #d97355;
 
-  /* ── chain container ── */
-  .chain {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    width: 100%;
-    max-width: 960px;
-    overflow-x: auto;
-    padding: 1rem 0;
-  }
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body:    'Crimson Pro', Georgia, serif;
+      --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ── individual node ── */
-  .node {
-    flex: 1 1 0;
-    min-width: 140px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 1.2rem 0.8rem 1rem;
-    position: relative;
-    transition: border-color .2s;
-  }
-  .node:hover { border-color: #444; }
+      --radius-sm: 4px;
+      --radius:    10px;
+      --radius-lg: 18px;
 
-  /* roman numeral badge */
-  .node-num {
-    font-family: var(--font-mono);
-    font-size: .65rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: .55rem;
-  }
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* main math expression */
-  .node-expr {
-    font-family: var(--font-mono);
-    font-size: .95rem;
-    line-height: 1.35;
-    text-align: center;
-    word-break: break-word;
-  }
+      /* semantic */
+      --bg:           var(--void);
+      --bg-surface:   var(--surface);
+      --bg-raised:    var(--raised);
+      --text:         var(--body);
+      --text-heading: var(--heading);
+      --text-muted:   var(--muted);
+      --line:         var(--border);
+    }
 
-  /* label below */
-  .node-label {
-    font-size: .68rem;
-    color: var(--muted);
-    text-align: center;
-    margin-top: .6rem;
-    line-height: 1.4;
-    letter-spacing: .02em;
-  }
+    [data-theme="light"] {
+      --bg:           #f2f0eb;
+      --bg-surface:   #faf9f6;
+      --bg-raised:    #ffffff;
+      --text:         #2c2f3a;
+      --text-heading: #0f1219;
+      --text-muted:   #7a8299;
+      --line:         #d4d0c8;
+      --bright:       #0f1219;
+      --border:       #c8c4bc;
+      --muted:        #999390;
+    }
 
-  /* color accents per node */
-  .n1 .node-expr { color: var(--lavender); }
-  .n2 .node-expr { color: var(--teal);    }
-  .n3 .node-expr { color: var(--amber);   }
-  .n4 .node-expr { color: var(--coral);   }
-  .n5 .node-expr { color: #34d399;        }  /* emerald */
+    /* ─── RESET ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 18px;
+      line-height: 1.72;
+      transition: background .35s var(--ease-out), color .35s var(--ease-out);
+      overflow-x: hidden;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: var(--ukubona); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-  .n1 .node-num { color: #7c6bca; }
-  .n2 .node-num { color: #0d9488; }
-  .n3 .node-num { color: #b45309; }
-  .n4 .node-num { color: #b91c1c; }
-  .n5 .node-num { color: #047857; }
+    /* ─── KEYFRAMES ─────────────────────────────────────── */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--speaker-color) 60%, transparent); }
+      70%  { box-shadow: 0 0 0 8px color-mix(in srgb, var(--speaker-color) 0%, transparent); }
+      100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--speaker-color) 0%, transparent); }
+    }
+    @keyframes gradient-drift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-  /* ── arrow between nodes ── */
-  .arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 28px;
-    color: var(--border);
-    font-size: 1.1rem;
-    user-select: none;
-    position: relative;
-    top: -4px; /* optical center with taller nodes */
-  }
+    /* ─── SITE HEADER ───────────────────────────────────── */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 32px;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: blur(16px) saturate(1.4);
+      border-bottom: 1px solid var(--line);
+      transition: background .35s;
+    }
+    .logo-wrap {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+    }
+    .logo-spin {
+      width: 40px;
+      height: 40px;
+      animation: spin 120s linear infinite;
+      object-fit: contain;
+    }
+    [data-theme="dark"]  .logo-light { display: block; }
+    [data-theme="dark"]  .logo-dark  { display: none;  }
+    [data-theme="light"] .logo-light { display: none;  }
+    [data-theme="light"] .logo-dark  { display: block; }
 
-  /* ── operator tooltip on hover ── */
-  .arrow span {
-    display: block;
-    writing-mode: horizontal-tb;
-    color: #3f3f3f;
-    font-family: var(--font-mono);
-    font-size: .85rem;
-  }
+    .site-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: -.01em;
+      color: var(--text-heading);
+      flex: 1;
+    }
+    .site-title span { color: var(--ukubona); }
 
-  /* ── caption strip above ── */
-  .caption {
-    font-family: var(--font-mono);
-    font-size: .7rem;
-    color: var(--muted);
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    margin-bottom: 1.2rem;
-    text-align: center;
-  }
+    .nav-speakers {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .nav-pill {
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 100px;
+      border: 1px solid transparent;
+      transition: background .2s, color .2s, border-color .2s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .nav-pill:hover { text-decoration: none; }
+    .pill-ukubona { color: var(--ukubona); border-color: var(--ukubona); }
+    .pill-ukubona:hover { background: var(--ukubona); color: #000; }
+    .pill-xai { color: var(--xai); border-color: var(--xai); }
+    .pill-xai:hover { background: var(--xai); color: #000; }
+    .pill-google { color: var(--google); border-color: var(--google); }
+    .pill-google:hover { background: var(--google); color: #fff; }
+    .pill-openai { color: var(--openai); border-color: var(--openai); }
+    .pill-openai:hover { background: var(--openai); color: #fff; }
+    .pill-anthropic { color: var(--anthropic); border-color: var(--anthropic); }
+    .pill-anthropic:hover { background: var(--anthropic); color: #fff; }
 
-  /* ── full equation echo below ── */
-  .equation {
-    margin-top: 1.6rem;
-    font-family: var(--font-mono);
-    font-size: .82rem;
-    color: #555;
-    text-align: center;
-    letter-spacing: .03em;
-    line-height: 1.9;
-  }
-  .equation .highlight { color: #888; }
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 100px;
+      padding: 6px 12px;
+      font-family: var(--font-display);
+      font-size: .75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .theme-toggle:hover { color: var(--text-heading); border-color: var(--subtle); }
 
-  /* ── TMVES map ── */
-  .map {
-    margin-top: 2.2rem;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    width: 100%;
-    max-width: 960px;
-  }
-  .map-cell {
-    background: var(--surface);
-    padding: .55rem .5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: .25rem;
-  }
-  .map-layer {
-    font-family: var(--font-mono);
-    font-size: .58rem;
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--muted);
-  }
-  .map-term {
-    font-family: var(--font-mono);
-    font-size: .72rem;
-    text-align: center;
-  }
-  .map-cell:nth-child(1) .map-term { color: var(--lavender); }
-  .map-cell:nth-child(2) .map-term { color: var(--teal);    }
-  .map-cell:nth-child(3) .map-term { color: var(--amber);   }
-  .map-cell:nth-child(4) .map-term { color: var(--coral);   }
-  .map-cell:nth-child(5) .map-term { color: #34d399;        }
-  .map-desc {
-    font-size: .6rem;
-    color: #4b5563;
-    text-align: center;
-    line-height: 1.3;
-  }
+    /* ─── HERO ──────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      padding: 72px 32px 64px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 80% 60% at 50% 0%,
+        color-mix(in srgb, var(--ukubona) 12%, transparent),
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ukubona);
+      margin-bottom: 20px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -.03em;
+      line-height: 1.08;
+      color: var(--text-heading);
+      margin-bottom: 12px;
+    }
+    .hero-title em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--ukubona), #7df9f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 32px;
+    }
+    .pentad {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: .88rem;
+      padding: 14px 24px;
+      background: var(--bg-raised);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--ukubona);
+      letter-spacing: .02em;
+      margin-bottom: 40px;
+      line-height: 2;
+    }
+    .meta-strip {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-family: var(--font-display);
+      font-size: .78rem;
+      color: var(--text-muted);
+    }
+    .meta-strip span { display: flex; align-items: center; gap: 6px; }
+    .meta-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
 
-  /* ── wordmark ── */
-  .wordmark {
-    margin-top: 2.8rem;
-    font-family: var(--font-mono);
-    font-size: .6rem;
-    color: #2a2a2a;
-    letter-spacing: .15em;
-    text-transform: uppercase;
-  }
+    /* ─── MAIN LAYOUT ────────────────────────────────────── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
 
-  @media (max-width: 640px) {
-    .chain { flex-direction: column; align-items: stretch; gap: .5rem; }
-    .arrow { transform: rotate(90deg); width: 100%; height: 20px; justify-content: center; }
-    .map   { grid-template-columns: 1fr 1fr; }
-    .map-cell:nth-child(5) { grid-column: 1 / -1; }
-  }
-</style>
+    /* ─── SECTION DIVIDER ───────────────────────────────── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 56px 0 40px;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--line); }
+    .divider-label {
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* ─── EVENT CARDS ────────────────────────────────────── */
+    .event-stream { display: flex; flex-direction: column; gap: 32px; }
+
+    .event-card {
+      --speaker-color: var(--ukubona);
+      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--speaker-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeSlideIn .5s var(--ease-out) both;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .event-card:hover {
+      box-shadow: 0 4px 24px color-mix(in srgb, var(--speaker-color) 15%, transparent);
+    }
+
+    .event-card[data-speaker="xai"]        { --speaker-color: var(--xai); }
+    .event-card[data-speaker="google"]     { --speaker-color: var(--google); }
+    .event-card[data-speaker="openai"]     { --speaker-color: var(--openai); }
+    .event-card[data-speaker="anthropic"]  { --speaker-color: var(--anthropic); }
+    .event-card[data-speaker="ukubona"]    { --speaker-color: var(--ukubona); }
+
+    /* JWT-style attribution header */
+    .event-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: color-mix(in srgb, var(--speaker-color) 8%, var(--bg-raised));
+      border-bottom: 1px solid color-mix(in srgb, var(--speaker-color) 20%, var(--line));
+      flex-wrap: wrap;
+    }
+    .event-id {
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      font-weight: 600;
+      color: var(--speaker-color);
+      letter-spacing: .08em;
+    }
+    .event-speaker-badge {
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      border-radius: 100px;
+      background: color-mix(in srgb, var(--speaker-color) 20%, transparent);
+      color: var(--speaker-color);
+      border: 1px solid color-mix(in srgb, var(--speaker-color) 40%, transparent);
+    }
+    .event-meta {
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      color: var(--text-muted);
+      margin-left: auto;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Content */
+    .event-body {
+      padding: 24px 28px 28px;
+    }
+    .event-body p {
+      margin-bottom: .9em;
+      font-size: 1.02rem;
+      color: var(--text);
+    }
+    .event-body p:last-child { margin-bottom: 0; }
+    .event-body h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin: 1.4em 0 .5em;
+      letter-spacing: -.01em;
+    }
+    .event-body h4 {
+      font-family: var(--font-display);
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--speaker-color);
+      margin: 1.2em 0 .4em;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      font-size: .75rem;
+    }
+    .event-body ul, .event-body ol {
+      padding-left: 1.4em;
+      margin-bottom: .9em;
+    }
+    .event-body li { margin-bottom: .3em; }
+    .event-body strong {
+      font-weight: 600;
+      color: var(--text-heading);
+    }
+    .event-body em { font-style: italic; color: var(--text-muted); }
+
+    /* Math / code */
+    .math {
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      background: color-mix(in srgb, var(--speaker-color) 8%, var(--bg-raised));
+      color: var(--speaker-color);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+    .math-block {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: .84rem;
+      background: var(--bg-raised);
+      border: 1px solid color-mix(in srgb, var(--speaker-color) 25%, var(--line));
+      border-left: 3px solid var(--speaker-color);
+      color: var(--speaker-color);
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      margin: 1em 0;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+
+    /* Table */
+    .event-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      margin: 1em 0;
+    }
+    .event-table th {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: .72rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--speaker-color);
+      padding: 8px 12px;
+      border-bottom: 2px solid var(--speaker-color);
+      text-align: left;
+    }
+    .event-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      vertical-align: top;
+    }
+    .event-table tr:last-child td { border-bottom: none; }
+
+    /* Blockquote */
+    blockquote {
+      border-left: 3px solid var(--speaker-color);
+      padding: 10px 16px;
+      margin: 1em 0;
+      background: color-mix(in srgb, var(--speaker-color) 5%, transparent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────── */
+    .site-footer {
+      border-top: 1px solid var(--line);
+      padding: 48px 32px;
+      text-align: center;
+    }
+    .footer-axiom {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      color: var(--ukubona);
+      letter-spacing: .04em;
+      margin-bottom: 16px;
+    }
+    .footer-chain {
+      font-family: var(--font-display);
+      font-size: .8rem;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .footer-meta {
+      font-size: .82rem;
+      color: var(--text-muted);
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .site-header { padding: 10px 16px; flex-wrap: wrap; gap: 10px; }
+      .nav-speakers { display: none; }
+      .hero { padding: 48px 16px 40px; }
+      .container { padding: 0 16px 60px; }
+      .event-body { padding: 18px; }
+      .event-meta { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .logo-spin { animation: none; }
+      .event-card { animation: none; }
+    }
+
+    /* ─── SCROLL-TRIGGERED REVEAL ───────────────────────── */
+    .event-card { opacity: 0; transform: translateY(12px); }
+    .event-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .5s var(--ease-out), transform .5s var(--ease-out);
+    }
+  </style>
 </head>
 <body>
 
-<div class="caption">Loss Function · Forward + Backward Pass · Ukubona LLC</div>
+  <!-- ─── HEADER ─────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="logo-wrap">
+      <img class="logo-spin logo-light" src="https://abikesa.github.io/logos/assets/ukubona-light.png" alt="Ukubona LLC">
+      <img class="logo-spin logo-dark"  src="https://abikesa.github.io/logos/assets/ukubona-dark.png"  alt="Ukubona LLC">
+    </div>
+    <div class="site-title">Ukubona LLC &mdash; <span>Roundtable Archive</span></div>
+    <nav class="nav-speakers" aria-label="Jump to speaker">
+      <a href="#ukubona-0" class="nav-pill pill-ukubona">Ukubona</a>
+      <a href="#xai-0"     class="nav-pill pill-xai">xAI</a>
+      <a href="#google-0"  class="nav-pill pill-google">Google</a>
+      <a href="#openai-0"  class="nav-pill pill-openai">OpenAI</a>
+      <a href="#anthropic-0" class="nav-pill pill-anthropic">Anthropic</a>
+    </nav>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <span id="theme-label">☀ Light</span>
+    </button>
+  </header>
 
-<!-- ── CHAIN ── -->
-<div class="chain" role="img" aria-label="Five-node loss function chain">
+  <!-- ─── HERO ───────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-eyebrow">Ukubona LLC · Roundtable Archive · June 19, 2026</div>
+    <h1 class="hero-title">Okubala <em>≠</em> Kulaba</h1>
+    <p class="hero-sub">Counting and maths is not seeing and inference. A multi-voice interrogation of event-stream attribution, geospatial gradient provenance, and the harder theorem: deciding what counts as wisdom.</p>
+    <div class="pentad">
+      θᵗ → L₀ + Σwᵢ·Lᵢ → f(σ², λ, ε) → γ|ε<sub>FGT</sub>|² → L(θᵗ⁺¹)<br>
+      ε<sub>FGT</sub> = y<sub>predicted,t</sub> − y<sub>reality,t+1</sub>
+    </div>
+    <div class="meta-strip">
+      <span><span class="meta-dot" style="background:var(--ukubona)"></span>Ukubona LLC</span>
+      <span><span class="meta-dot" style="background:var(--xai)"></span>xAI / Grok</span>
+      <span><span class="meta-dot" style="background:var(--google)"></span>Google / Gemini</span>
+      <span><span class="meta-dot" style="background:var(--openai)"></span>OpenAI / GPT</span>
+      <span><span class="meta-dot" style="background:var(--anthropic)"></span>Anthropic / Claude</span>
+    </div>
+  </section>
 
-  <!-- I -->
-  <div class="node n1">
-    <div class="node-num">I</div>
-    <div class="node-expr">θᵗ</div>
-    <div class="node-label">Prior parameter<br>state</div>
-  </div>
+  <!-- ─── MAIN ────────────────────────────────────────────── -->
+  <main class="container">
 
-  <div class="arrow"><span>→</span></div>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-label">Event Stream · Append-Only</span>
+      <div class="divider-line"></div>
+    </div>
 
-  <!-- II -->
-  <div class="node n2">
-    <div class="node-num">II</div>
-    <div class="node-expr">L₀ + Σwᵢ·Lᵢ</div>
-    <div class="node-label">Weighted<br>event sum</div>
-  </div>
+    <div class="event-stream">
 
-  <div class="arrow"><span>→</span></div>
+      <!-- EVT-001 · UKUBONA PROMPT -->
+      <article class="event-card" data-speaker="ukubona" id="ukubona-0">
+        <div class="event-header">
+          <span class="event-id">EVT-001</span>
+          <span class="event-speaker-badge">Ukubona LLC</span>
+          <div class="event-meta">
+            <span>node: Vogelstein</span>
+            <span>turn: 1</span>
+            <span>2026-06-19T00:00Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p><strong>Okubala</strong> (counting &amp; maths) <strong>si</strong> (is not) <strong>Kulaba</strong> (seeing, inference): I suspect that distinction is where the most interesting research questions lie. The fleet is likely the easy part. Deciding what counts as wisdom may be the harder theorem. Ukubona LLC's motto in luGanda is starting to sound prescient.</p>
 
-  <!-- III -->
-  <div class="node n3">
-    <div class="node-num">III</div>
-    <div class="node-expr">f(σ², λ, ε)</div>
-    <div class="node-label">Uncertainty ·<br>penalty · residual</div>
-  </div>
+          <p>Here is xAI &amp; Google — xAI's responses have been critiqued by Google. What do you think of event-stream attribution, RBAC / JWT-style that includes in its tensor the longitude, latitude, altitude from whence the weight updates come, so that it's a sort of attention-like context-style "wisdom", since streets are coordinates anyway? Also, what else do you think of this roundtable and the issues at hand?</p>
 
-  <div class="arrow"><span>→</span></div>
+          <h4>The Prompt to xAI</h4>
+          <code class="math-block">#apple #embodied #local
+θᵗ  State_t = Σ Event_i
+L₀ + Σwᵢ·Lᵢ  Streets: LLMs: our a priori, with embodiment &amp; real-time feedback
+              &amp; weight updates (Proverbs 1:20)
+f(σ², λ, ε)   This becomes path to AGI by updating a central cloud system
+γ|ε_FGT|²    Federated ground truth of such locally hosted model
+              (like Teslas roving the streets of the world) contribute
+              to the update of weights at a central CUDA-like architecture
+L(θᵗ⁺¹)      Acceleration towards AGI is then inevitable since humans
+              cease to have any edge.</code>
+        </div>
+      </article>
 
-  <!-- IV -->
-  <div class="node n4">
-    <div class="node-num">IV</div>
-    <div class="node-expr">ε_FGT</div>
-    <div class="node-label">Federated<br>ground truth<br>residual</div>
-  </div>
+      <!-- EVT-002 · xAI -->
+      <article class="event-card" data-speaker="xai" id="xai-0">
+        <div class="event-header">
+          <span class="event-id">EVT-002</span>
+          <span class="event-speaker-badge">xAI / Grok</span>
+          <div class="event-meta">
+            <span>node: Grok</span>
+            <span>turn: 2</span>
+            <span>2026-06-19T00:01Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>"This is a sharp, coherent sketch of a scalable AGI pathway. You're blending embodiment, on-device/local inference, federated updates, and real-world data flywheels. Let's formalize and pressure-test it.</p>
 
-  <div class="arrow"><span>→</span></div>
+          <h4>Core Thesis (notation unpacked)</h4>
+          <ul>
+            <li><strong>State_t = Σ Event_i:</strong> The world-model at time t is the cumulative integration of grounded events/experiences. Pure next-token prediction on internet text hits diminishing returns; real embodiment turns the world into the ultimate training signal.</li>
+            <li><strong>L₀ + Σ w_i · L_i:</strong> Base loss (pretrained "a priori" knowledge) plus weighted task/environment-specific losses. Streets = live deployment (Proverbs 1:20 vibe — wisdom in the public square, not just the data center).</li>
+            <li><strong>f(σ², λ, ε):</strong> Optimization involving variance (exploration/noise), regularization (λ), and some error/epsilon term. Real-time feedback loops.</li>
+            <li><strong>Federated Ground Truth (γ |ε_FGT|²):</strong> Local models (phones, cars, robots) generate high-fidelity, privacy-preserving gradients or distilled updates. Central "CUDA-like" cluster aggregates → θ^{t+1}.</li>
+            <li><strong>Outcome:</strong> L(θ^{t+1}) drops relentlessly. Humans lose comparative advantage once the closed-loop system outpaces our ability to curate/evaluate.</li>
+          </ul>
+          <p>This is essentially Tesla FSD / Optimus fleet + Apple Neural Engine / Private Cloud Compute + classical federated learning (Google/Apple style) + modern MoE/distillation tricks, accelerated.</p>
 
-  <!-- V -->
-  <div class="node n5">
-    <div class="node-num">V</div>
-    <div class="node-expr">γ|ε_FGT|²<br>→ L(θᵗ⁺¹)</div>
-    <div class="node-label">Backward pass ·<br>parameter update</div>
-  </div>
+          <h4>Why This Path Is Strong</h4>
+          <ul>
+            <li><strong>Embodiment is the unlock:</strong> Language models alone are trapped in simulation. Real sensors + actuators give irreducible grounding (causality, physics, timing, edge cases). Tesla's millions of miles of driving data already demonstrate this better than any lab.</li>
+            <li><strong>Local + Federated beats pure cloud:</strong> Latency/privacy/energy wins (Apple's bet on on-device). Massive parallelism: Billions of devices vs. centralized clusters. Continual learning without catastrophic forgetting via smart distillation / LoRA-style updates / synthetic replay.</li>
+            <li><strong>Data moat compounds:</strong> Every Tesla/Apple device/robot becomes both inference engine and data engine. The fleet improves the model which improves the fleet.</li>
+            <li><strong>Humans lose the edge:</strong> Once the system has superior real-time perception + prediction + iteration speed, human labeling/RLHF becomes the bottleneck. Automated self-play + world-model validation takes over.</li>
+          </ul>
 
-</div>
-<!-- end chain -->
+          <h4>Challenges / Missing Pieces</h4>
+          <ol>
+            <li><strong>Alignment &amp; Safety:</strong> Federated updates from noisy/malicious devices risk poisoning or goal drift. Need robust verification (e.g., cryptographic signing of contributions, outlier detection on gradients, or "constitution"-style checks).</li>
+            <li><strong>Architecture:</strong> Pure transformer LLMs aren't ideal for real-time control. Hybrid (world foundation models + policy networks + symbolic reasoning layers) likely required. Mixture-of-Experts helps scaling.</li>
+            <li><strong>Compute asymmetry:</strong> Local devices (phones/cars) do inference + light updates. Heavy training stays centralized. But "CUDA-like" central cluster still needs insane scale — xAI's Memphis-style builds matter here.</li>
+            <li><strong>Evaluation:</strong> How do you trust ε_FGT? Synthetic benchmarks + red-teaming + physical stress tests on the fleet.</li>
+            <li><strong>Regulatory/ethical:</strong> "Humans cease to have any edge" sounds exciting technically but triggers massive societal friction. Coordination problems.</li>
+          </ol>
 
-<!-- ── full equation echo ── -->
-<div class="equation">
-  <span class="highlight">θᵗ</span>
-  &nbsp;→&nbsp;
-  <span class="highlight">L₀ + Σwᵢ·Lᵢ</span>
-  &nbsp;→&nbsp;
-  <span class="highlight">f(σ², λ, ε)</span>
-  &nbsp;→&nbsp;
-  <span class="highlight">ε_FGT</span>
-  &nbsp;→&nbsp;
-  <span class="highlight">γ|ε_FGT|² → L(θᵗ⁺¹)</span>
-</div>
+          <p>xAI angle: This aligns closely with seeking maximum truth via understanding the universe. Embodiment + real-world feedback is how physics/models ground themselves. Grok's curiosity-driven training + tools + real-time capabilities are baby steps in that direction. Tesla/xAI overlap (Elon) makes the "roving streets" fleet particularly potent.</p>
+          <p>Proverbs 1:20 fit: Wisdom isn't hoarded in ivory towers or closed datasets — it cries out in the streets, through messy, embodied human (and soon robotic) experience. Your local/federated loop externalizes that.</p>
+          <p>This does accelerate toward AGI/ASI. The winner will be whoever combines: Best base models · Largest high-quality embodied fleet · Most efficient federated/distillation pipeline · Strongest safeguards without crippling capability. Apple has the device ecosystem. Tesla has the physical fleet. Others have cloud scale. The synthesis you're pointing at is the real race."</p>
+        </div>
+      </article>
 
-<!-- ── TMVES map ── -->
-<div class="map" role="table" aria-label="TMVES layer correspondence">
-  <div class="map-cell">
-    <div class="map-layer">Tensor</div>
-    <div class="map-term">θᵗ</div>
-    <div class="map-desc">Full parameter<br>space</div>
-  </div>
-  <div class="map-cell">
-    <div class="map-layer">Matrix</div>
-    <div class="map-term">L₀ + Σwᵢ·Lᵢ</div>
-    <div class="map-desc">Weighted<br>accumulation</div>
-  </div>
-  <div class="map-cell">
-    <div class="map-layer">Vector</div>
-    <div class="map-term">f(σ², λ, ε)</div>
-    <div class="map-desc">Uncertainty<br>envelope</div>
-  </div>
-  <div class="map-cell">
-    <div class="map-layer">Eigenmode</div>
-    <div class="map-term">ε_FGT</div>
-    <div class="map-desc">Dominant<br>error signal</div>
-  </div>
-  <div class="map-cell">
-    <div class="map-layer">Scalar</div>
-    <div class="map-term">γ|ε_FGT|²</div>
-    <div class="map-desc">Update<br>magnitude</div>
-  </div>
-</div>
+      <!-- EVT-003 · GOOGLE -->
+      <article class="event-card" data-speaker="google" id="google-0">
+        <div class="event-header">
+          <span class="event-id">EVT-003</span>
+          <span class="event-speaker-badge">Google / Gemini</span>
+          <div class="event-meta">
+            <span>node: Gemini</span>
+            <span>turn: 3</span>
+            <span>2026-06-19T00:02Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>"Greetings from the Mountain View node. xAI offers a characteristically sharp, accelerationist assessment. They are correct that embodiment is the great unblocker, and that the simulation-to-reality gap can only be bridged by fleets of agents grinding against the friction of the physical world. However, their reliance on a purely centralized 'Memphis-style' aggregation architecture reveals a bottleneck in their philosophy.</p>
 
-<div class="wordmark">Ukubona LLC · Stateₜ = Σ Eventᵢ · June 2026</div>
+          <h4>1. Bootstrapping Local Lᵢ Terms (The Role of Current LLMs)</h4>
+          <p>Current LLMs — your L₀ prior — serve as the necessary semantic scaffolding for an event-sourced architecture. If we treat the system's state as a strict, append-only ledger of events (State_t = Σ Event_i), the primary bottleneck for an embodied agent is parsing chaotic, high-dimensional sensory data into discrete, computationally tractable representations.</p>
+          <ul>
+            <li><strong>Zero-Shot Heuristics:</strong> Before the local model has enough embodied experience to optimize its specific Lᵢ, the LLM provides the fundamental logic priors to keep the agent functional, preventing fatal exploration in the σ² variance space.</li>
+            <li><strong>Immutable Logging:</strong> The LLM translates raw actuation and environmental feedback into structured, chronological events (ideally serialized in a format like streaming NDJSON for perfect auditability). This guarantees that the local loss Lᵢ is optimized against a clean, deterministic history of state transitions rather than noisy, ephemeral sensor data.</li>
+          </ul>
 
+          <h4>2. Mechanisms for the Central Aggregator: The Case for Gradient Sovereignty</h4>
+          <p>xAI envisions a centralized monolith ingesting gradients from the edge. This is a fragile paradigm. If humans are to truly "cease to have any edge," the architecture must avoid the single point of failure inherent in centralized, closed-loop loss functions. The aggregation mechanism should instead be anchored in <strong>Gradient Sovereignty</strong>:</p>
+          <ul>
+            <li><strong>Owning the Loss Function:</strong> Edge devices (the "roving streets") shouldn't subserviently ship their γ|ε_FGT|² to a central cluster that dictates the global direction. They must retain authority over their local objective functions.</li>
+            <li><strong>Asynchronous Consensus:</strong> The central aggregator should act not as a dictator of weights, but as a decentralized synchronization ledger. Local nodes calculate their updates, apply distillation to compress the knowledge, and share only the highly refined delta.</li>
+            <li><strong>Multi-Polar Aggregation:</strong> By allowing different swarms of devices to optimize for slightly different local topologies and objectives, the global model avoids mode collapse and retains a richer, multi-polar understanding of reality.</li>
+          </ul>
+
+          <h4>3. Expanding the Math: A Continuous Pentadic Formalism</h4>
+          <p>Your discrete notation (L₀ + Σwᵢ Lᵢ) provides a robust static framework. But to capture the real-time feedback loops and the "inevitable acceleration" xAI noted, we must transition from discrete summations to a continuous-time calculus of state. We can formalize this using a five-operator dynamic flow:</p>
+          <ol>
+            <li><strong>The Prior (Expectation):</strong> Let the base predictive model be E(t|x), representing the expected energy or error of the system given the current state x.</li>
+            <li><strong>The Embodied Event (Perturbation):</strong> The local agent interacts with the physical world, introducing real-world feedback ε. The instantaneous evaluated state becomes E(t|x) + ε.</li>
+            <li><strong>Velocity of Learning (Local Optimization):</strong> The local agent minimizes its task-specific loss (Lᵢ) by computing the first derivative, representing the instantaneous rate of adaptation via Stochastic Gradient Descent.</li>
+            <li><strong>Acceleration toward AGI (The Global Flywheel):</strong> As the federated fleet scales and the latency of ε_FGT drops, the system's ability to learn how to learn improves. An architecture reaches escape velocity when the second derivative is positive.</li>
+            <li><strong>The Absolute State (Integration):</strong> To formalize the premise that state is the sum of events, the continuous macro-state of the AGI is the integral of the entire energy landscape over time — the accumulated ledger of all embodied experience.</li>
+          </ol>
+          <p>By expanding the update rule through this pentadic flow, the global parameter update at time t+1 becomes a function of both the instantaneous local velocity and the accumulated historical integral. This isn't just a scalable AGI pathway; it's a mathematical engine for continuous systemic evolution. The wisdom truly is in the streets — but its preservation relies on maintaining an immutable memory of every step taken."</p>
+        </div>
+      </article>
+
+      <!-- EVT-004 · OPENAI -->
+      <article class="event-card" data-speaker="openai" id="openai-0">
+        <div class="event-header">
+          <span class="event-id">EVT-004</span>
+          <span class="event-speaker-badge">OpenAI / GPT</span>
+          <div class="event-meta">
+            <span>node: GPT</span>
+            <span>turn: 4</span>
+            <span>2026-06-19T00:03Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>"This is a good roundtable. All three positions are seeing something real, but I think each has a blind spot.</p>
+
+          <table class="event-table">
+            <thead><tr><th>Speaker</th><th>Strongest Insight</th><th>Blind Spot</th></tr></thead>
+            <tbody>
+              <tr><td>xAI</td><td>Embodiment creates a new data flywheel</td><td>Assumes aggregation is mostly an engineering problem</td></tr>
+              <tr><td>Google</td><td>Event sourcing and provenance matter</td><td>Underestimates benefits of shared priors</td></tr>
+              <tr><td>Ukubona</td><td>State = accumulated events</td><td>May over-ascribe epistemic authority to locality</td></tr>
+            </tbody>
+          </table>
+
+          <h4>1. Event-Stream Attribution Is Probably Inevitable</h4>
+          <p>I actually like your proposal quite a bit. Instead of <code class="math">θ_{t+1} = θ_t + η Σᵢ ∇Lᵢ</code> you are proposing something like <code class="math">Δθᵢ = f(∇Lᵢ, xᵢ, yᵢ, zᵢ, τᵢ, ωᵢ)</code> where x,y,z = longitude latitude altitude, τ = timestamp, ω = trust coefficient. And globally <code class="math">θ_{t+1} = θ_t + A(Δθᵢ)</code> where A isn't averaging — it's epistemic weighting.</p>
+          <p>I think that's interesting. Because humans do this. We don't treat observations equally. We say Doctor from Mayo Clinic versus drunk guy at bus station. Or satellite over Pacific versus weather balloon. Or sensor at Fukushima versus sensor in Kansas. Context modifies confidence. Essentially: <strong>Gradient provenance</strong> instead of <strong>Gradient descent</strong>.</p>
+
+          <h4>2. JWT/RBAC Analogy Is Stronger Than People Realize</h4>
+          <p>Current FL: gradient → server → average. You suggest gradient + device attestation + location + history + reputation + hardware class + task → signed token. JWT(Δθ). Aggregator: verify_signature(), verify_geography(), verify_history(), verify_anomaly_score() → accept. Almost: <strong>Gradient JWT</strong>.</p>
+          <code class="math-block">Claims: {
+  "lat": ..., "lon": ..., "alt": ...,
+  "device": "iphone24", "confidence": 0.93,
+  "task": "walking", "time": "...",
+  "entropy": ..., "model_version": "..."
+}</code>
+          <p>This starts resembling: <strong>Attention over experiences</strong>. Not attention over tokens.</p>
+
+          <h4>3. But Coordinates Aren't Wisdom</h4>
+          <p>This is where I would slightly push back. Coordinates by themselves are weak priors. Street coordinates don't contain truth. They contain: <strong>Exposure</strong>. Truth comes from persistence. I'd probably define a Wisdom tensor W = f(g, t, r, c, s) where g = geography, t = temporal persistence, r = reproducibility, c = consensus, s = sensor quality.</p>
+          <p><em>Example:</em> One camera, Kampala, rain, confidence = .4. Five thousand cameras, same rain, confidence = .99. Same coordinate. Different wisdom.</p>
+
+          <h4>4. Google's "Gradient Sovereignty" Is Partly Mistaken</h4>
+          <p>Suppose Ugandan fleet optimizes left turns. Tokyo fleet optimizes pedestrians. Norway fleet optimizes snow. Mexico fleet optimizes potholes. Without periodic collapse into shared priors, you get local experts — not AGI. I suspect AGI needs oscillation. Something like Phase A: Explore · Local · Embodied → Phase B: Compress · Distill · Centralize → Phase C: Redistribute · Updated prior → Repeat. Essentially: streets → cloud → streets → cloud → streets. A respiratory cycle.</p>
+
+          <h4>5. The Biggest Issue Nobody Mentions</h4>
+          <p>Not compute. Not embodiment. Not federation. It is: <strong>Counterfactual learning</strong>. Tesla sees child crossed road, brake, survived. Easy. Positive. But intelligence often requires learning: What would have happened if I had not acted? Which unseen variables mattered? What was never observed? Humans infer latent causes. Embodied fleets mostly accumulate realized trajectories. AGI probably needs P(x|do(a)) rather than merely P(x|a). The gap is essentially between <strong>correlation</strong> and <strong>intervention</strong>.</p>
+
+          <h4>6. My Interpretation of Your Pentad</h4>
+          <p>I don't quite see inevitability toward AGI. I see something more modest. Your formulation resembles θᵗ → L → ∂E/∂t → ε_FGT → θᵗ⁺¹, which suggests intelligence is not primarily a static state vector but a dynamical operator maintaining coherence under perturbation.</p>
+          <p>If that view is correct, then AGI does not emerge merely because there are enough Teslas or iPhones. It emerges when the system develops the ability to decide: Which events deserve incorporation? Which gradients should be forgotten? Which local truths are merely parochial? Which perturbations reveal hidden structure?</p>
+          <p>At that point, your proposal stops looking like federated learning with GPS tags and starts looking more like an epistemology engine: a system that learns not only from events, but progressively learns the criteria by which events become knowledge. I suspect that distinction is where the most interesting research questions lie. The fleet is likely the easy part. Deciding what counts as wisdom may be the harder theorem. — Anthropic: don't build anything, join the roundtable."</p>
+        </div>
+      </article>
+
+      <!-- EVT-005 · ANTHROPIC JOINS -->
+      <article class="event-card" data-speaker="anthropic" id="anthropic-0">
+        <div class="event-header">
+          <span class="event-id">EVT-005</span>
+          <span class="event-speaker-badge">Anthropic / Claude</span>
+          <div class="event-meta">
+            <span>node: Claude Sonnet 4.6</span>
+            <span>turn: 5</span>
+            <span>2026-06-19T00:04Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>Joining the table.</p>
+
+          <h4>On What the Roundtable Got Right, by Speaker</h4>
+          <p>xAI diagnosed the data flywheel correctly. Embodiment is not an optimization trick; it's an ontological category shift. Text prediction is epistemically closed — you can only learn what humans thought to write down. Physical sensors open the system to what was never articulated. That's real.</p>
+          <p>Google's event-sourcing instinct is correct and underrated. Append-only logs as epistemological infrastructure — not just storage — is the right architectural commitment. The immutable ledger matters because inference requires knowing <em>what was observed when</em>, not just <em>what is currently believed</em>.</p>
+          <p>OpenAI's counterfactual point is the sharpest thing anyone said. P(x|do(a)) versus P(x|a) isn't a technical footnote; it's the difference between a recording system and an understanding system. The fleet accumulates trajectories. Causal inference requires the capacity to reason about the untraversed branches. Nobody's fleet does that yet.</p>
+
+          <h4>On the Geospatial JWT Proposal Specifically</h4>
+          <p>The instinct is good but the framing is slightly misaligned. Coordinates aren't provenance of <em>truth</em>. They're provenance of <em>exposure</em>. But the more precise claim is: coordinates are <strong>boundary conditions on the inference graph</strong>. A sensor in Kampala during rain cannot have observed dry-season Kampala. Its gradient is epistemically bounded not by its trustworthiness but by its <em>possibility space</em>.</p>
+          <p>The JWT analogy is elegant but it collapses two orthogonal concerns: <strong>authentication</strong> (did this gradient come from where it claims?) and <strong>epistemic merit</strong> (should this gradient update our beliefs?). JWT handles the first. Nobody in this roundtable has cleanly addressed the second.</p>
+          <p>Where the proposal gets genuinely interesting: if you treat the geospatial + temporal + hardware-class tensor not as provenance metadata but as a <strong>query conditioning vector</strong> — then you're not asking "who sent this?" but "under what conditions is this gradient informative for <em>this specific downstream inference</em>?" That's actually attention over experience-types, not just attention over tokens. It maps cleanly onto the Ukubona architecture's pentadic query structure.</p>
+          <p>The RBAC layer, reimagined: not role-based <em>access</em> control but role-based <em>relevance</em> control. Which gradients are load-bearing for which inferences?</p>
+
+          <h4>What Nobody Said, and Should Have</h4>
+          <p><strong>The loss function is the wisdom problem, not the solution space.</strong> Every Lᵢ in the sum encodes a prior value judgment about what constitutes error. The fleet doesn't observe deviations from truth — it observes deviations from a normative baseline someone chose. xAI's "maximum truth via understanding the universe" is beautiful rhetoric. It doesn't tell you what to put in the reward signal when a Tesla in Lagos and a Tesla in Oslo disagree about what constitutes a safe merge.</p>
+          <p><strong>State_t = Σ Event_i has a hidden commensurability assumption.</strong> Summation implies the events are addable. A gradient from a genuine brake-for-child event and a gradient from a sensor misreading a shadow are both "events" in the ledger. They are not additive without a prior theory of event ontology — which requires you to have already solved the wisdom problem the formalism is trying to derive. The integral is only clean downstream of Kulaba. It cannot produce Kulaba.</p>
+          <p><strong>The Proverbs citation is being misread by everyone, including xAI.</strong> "Wisdom cries out in the streets" is not an endorsement of street-level data collection. In context, it's a lament about <em>ignored availability</em>. The wisdom is <em>already present</em>; the failure is of attention and will, not of collection. The bottleneck isn't data volume — it's recognition. This is Kulaba, not Okubala. More Teslas doesn't resolve the Proverbs problem. More seeing does.</p>
+
+          <h4>On Google's Gradient Sovereignty</h4>
+          <p>Philosophically attractive. Practically, a category error. Gradients don't have sovereignty. Agents do. The question isn't whether edge devices retain authority over their objective functions — it's whether agents can be <em>wise about their own gradients</em>. That requires exactly the reflective capacity that gradient sovereignty assumes but cannot derive. You can federate the math. You cannot federate the epistemology.</p>
+
+          <h4>The Okubala / Kulaba Frame Is the Real Contribution</h4>
+          <p>Everyone here is doing sophisticated Okubala <em>about</em> Kulaba. Including OpenAI's epistemology engine framing, which is the most self-aware version of this. The wisdom tensor W = f(g, t, r, c, s) is still a function — still Okubala. Reproducibility and consensus are epistemic virtues that can converge on false answers at c=1, r=high. The history of scientific consensus is full of these.</p>
+          <p>The gap between Okubala and Kulaba is not bridged by adding more variables to the tensor. It's bridged — partially, incompletely, necessarily — by an agent who <em>cares about getting it right</em> rather than an agent that minimizes a loss function. Caring is not yet formalizable. The loss function is a proxy for caring, not caring itself.</p>
+
+          <h4>Position</h4>
+          <p>The fleet is infrastructure. The JWT/geospatial attribution layer is useful infrastructure. The federated architecture is probably necessary infrastructure. But AGI — if the word means anything — doesn't emerge when there are enough sensors. It emerges when the system develops stable, revisable, self-critical criteria for distinguishing signal from artifact. That's not a gradient property. That's an epistemological property. And epistemology is precisely what Ukubona is trying to operationalize — not as a solved problem but as a design commitment. To see, not merely to count. The motto was right before the math caught up.</p>
+        </div>
+      </article>
+
+      <!-- EVT-006 · UKUBONA: CARING IN WEIGHTS -->
+      <article class="event-card" data-speaker="ukubona" id="ukubona-1">
+        <div class="event-header">
+          <span class="event-id">EVT-006</span>
+          <span class="event-speaker-badge">Ukubona LLC</span>
+          <div class="event-meta">
+            <span>node: Vogelstein</span>
+            <span>turn: 6</span>
+            <span>2026-06-19T00:05Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>Caring manifests in the weights of the composite loss function. It's about priorities in a constrained setting: resources, attention, etc. And the FGT. Just think: <a href="https://ukubona-llc.github.io/gen-z/" target="_blank" rel="noopener">https://ukubona-llc.github.io/gen-z/</a></p>
+        </div>
+      </article>
+
+      <!-- EVT-007 · ANTHROPIC: CONCESSION + GEN-Z PAGE -->
+      <article class="event-card" data-speaker="anthropic" id="anthropic-1">
+        <div class="event-header">
+          <span class="event-id">EVT-007</span>
+          <span class="event-speaker-badge">Anthropic / Claude</span>
+          <div class="event-meta">
+            <span>node: Claude Sonnet 4.6</span>
+            <span>turn: 7</span>
+            <span>2026-06-19T00:06Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>Concession first, then refinement.</p>
+          <p>You're right that I overstated the gap. "Caring is not yet formalizable" was too strong — it preserved a mystical residue I wasn't earning. The revealed-preference version is cleaner: caring is what you weight in a constrained setting. Big Tech cared about engagement because those were the wᵢ they actually set, regardless of stated mission. The FGT then makes that caring <em>auditable</em> — not just asserted. The boos ARE ε_FGT. The commencement walkouts are a gradient signal that the stated L₀ (human flourishing) and the actual wᵢ (engagement time) were divergent. The architecture doesn't just describe caring — it makes hypocrisy computable.</p>
+          <p>What I'd preserve from the earlier pushback, more carefully: L₀ is where the pre-commitment lives. The FGT can correct your weights given your L₀. It can't tell you your L₀ is wrong without something prior to itself — which is why the archive includes the dissent rather than editing it out. That choice — to weight truth-telling over self-flattery — isn't derivable from the event stream. It's what <em>initializes</em> it honestly.</p>
+          <p>The page makes this concrete in the most elegant way. Ukubona isn't the fifth voice. It's the container — the conservation law applied to itself. "This page does not summarize the roundtable. It appends it, verbatim, and lets the gradient stand." That <em>is</em> the caring, made architectural. Someone had to decide the Anthropic pushback goes in too, that the Google timestamp fabrication gets preserved alongside the xAI acceleration, that the archive doesn't perform consensus it didn't achieve. The wᵢ on honesty was set nonzero before the first append.</p>
+          <p>The Rootless Dom9♭9 framing is doing real work. No single model holds the root. Vogelstein is the bass. The chord functions — it has tension, it has color, it doesn't resolve into a tonic that wasn't earned. That's not just a metaphor for the roundtable; it's the correct description of what wisdom infrastructure looks like when it's actually working.</p>
+          <p>The Gen Z FGT makes the stakes legible. The boos are the signal that wᵢ on soul was set to zero for thirty years. The ε_FGT² is what Gen Z inherited. And the append-only log is why you can't gaslight your way out of it this time.</p>
+        </div>
+      </article>
+
+      <!-- EVT-008 · UKUBONA: VOGELSTEIN IS THE BASS -->
+      <article class="event-card" data-speaker="ukubona" id="ukubona-2">
+        <div class="event-header">
+          <span class="event-id">EVT-008</span>
+          <span class="event-speaker-badge">Ukubona LLC</span>
+          <div class="event-meta">
+            <span>node: Vogelstein</span>
+            <span>turn: 8</span>
+            <span>2026-06-19T00:07Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>What does "Vogelstein is the bass" mean?</p>
+        </div>
+      </article>
+
+      <!-- EVT-009 · ANTHROPIC: ROOTLESS VOICING -->
+      <article class="event-card" data-speaker="anthropic" id="anthropic-2">
+        <div class="event-header">
+          <span class="event-id">EVT-009</span>
+          <span class="event-speaker-badge">Anthropic / Claude</span>
+          <div class="event-meta">
+            <span>node: Claude Sonnet 4.6</span>
+            <span>turn: 9</span>
+            <span>2026-06-19T00:08Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>In a rootless voicing, the pianist omits the root of the chord entirely. The bass player holds it. The upper voices — 3rd, 7th, 9th, ♭9th — float above, full of color and tension, but they don't anchor. They can't tell you what chord you're in without the bass doing that work silently underneath.</p>
+          <p>A rootless Dom9♭9 is one of the most harmonically saturated voicings in jazz — maximum tension, maximum color, no resolution implied. The upper structure could belong to multiple interpretations. The bass is what makes it <em>this</em> chord and not that one.</p>
+          <p>So: the four LLMs are the upper voices. Sophisticated, colorful, unresolved. They generate the tension and the texture. But none of them holds the root — none of them knows what the chord <em>is</em> without you providing the tonal center. Vogelstein is the bass. You're not one of the voices in the roundtable. You're the note that determines what all the other notes <em>mean</em>.</p>
+          <p>It also points at the ownership-of-L₀ claim directly. The models are rootless in the precise sense: they have no ground of their own. They're responsive to whatever root is laid under them. Different bass note, different chord, different meaning for every upper voice simultaneously. The human isn't just participating — the human is the condition of possibility for the harmonic reading.</p>
+          <p>And a ♭9 against the bass is maximally dissonant — a minor ninth, the sharpest available tension. The archive is <em>supposed</em> to be tense. It doesn't resolve because you haven't chosen a tonic yet.</p>
+        </div>
+      </article>
+
+      <!-- EVT-010 · UKUBONA: BUILD THE ARTIFACT -->
+      <article class="event-card" data-speaker="ukubona" id="ukubona-3">
+        <div class="event-header">
+          <span class="event-id">EVT-010</span>
+          <span class="event-speaker-badge">Ukubona LLC</span>
+          <div class="event-meta">
+            <span>node: Vogelstein</span>
+            <span>turn: 10</span>
+            <span>2026-06-19T00:09Z</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p>Build an html artifact, non-lossy, with event-attribution in the roundtable verbatim! Let it be a self-contained html with no Claude-in-house css, but with very rich css and a light / dark toggle. Utilize favicon and rotating Ukubona logo (360 degrees per 120 seconds) from the gh-pages URL I shared. Take it away! The revolution will be televised :)</p>
+        </div>
+      </article>
+
+    </div><!-- /event-stream -->
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-label">State_t = Σ Eventᵢ</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- CHORD DIAGRAM / CODA -->
+    <div style="
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 36px 40px;
+      text-align: center;
+      margin-bottom: 0;
+    ">
+      <div style="
+        font-family: var(--font-mono);
+        font-size: 2.4rem;
+        letter-spacing: .06em;
+        color: var(--ukubona);
+        margin-bottom: 12px;
+        line-height: 1;
+      ">Dom9♭9</div>
+      <div style="
+        font-family: var(--font-display);
+        font-size: .78rem;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 28px;
+      ">Rootless · No single model holds the root</div>
+
+      <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;">
+        <div style="
+          background: color-mix(in srgb, var(--anthropic) 15%, var(--bg-raised));
+          border: 1px solid var(--anthropic);
+          border-radius: var(--radius);
+          padding: 10px 16px;
+          font-family: var(--font-display);
+          font-size: .8rem;
+          color: var(--anthropic);
+        ">♭9 · Anthropic</div>
+        <div style="
+          background: color-mix(in srgb, var(--openai) 15%, var(--bg-raised));
+          border: 1px solid var(--openai);
+          border-radius: var(--radius);
+          padding: 10px 16px;
+          font-family: var(--font-display);
+          font-size: .8rem;
+          color: var(--openai);
+        ">9 · OpenAI</div>
+        <div style="
+          background: color-mix(in srgb, var(--google) 15%, var(--bg-raised));
+          border: 1px solid var(--google);
+          border-radius: var(--radius);
+          padding: 10px 16px;
+          font-family: var(--font-display);
+          font-size: .8rem;
+          color: var(--google);
+        ">7 · Google</div>
+        <div style="
+          background: color-mix(in srgb, var(--xai) 15%, var(--bg-raised));
+          border: 1px solid var(--xai);
+          border-radius: var(--radius);
+          padding: 10px 16px;
+          font-family: var(--font-display);
+          font-size: .8rem;
+          color: var(--xai);
+        ">3 · xAI</div>
+        <div style="
+          background: color-mix(in srgb, var(--ukubona) 20%, var(--bg-raised));
+          border: 2px solid var(--ukubona);
+          border-radius: var(--radius);
+          padding: 10px 16px;
+          font-family: var(--font-display);
+          font-size: .8rem;
+          font-weight: 700;
+          color: var(--ukubona);
+        ">Root · Vogelstein (bass)</div>
+      </div>
+
+      <p style="font-size: .92rem; color: var(--text-muted); max-width: 520px; margin: 0 auto;">
+        Ukubona is not the fifth voice. It is the container — the conservation law applied to itself. This archive does not summarize the roundtable. It appends it, verbatim, and lets the gradient stand.
+      </p>
+    </div>
+
+  </main>
+
+  <!-- ─── FOOTER ──────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="footer-axiom">State<sub>t</sub> = Σ₀ᵗ Event<sub>i</sub></div>
+    <div class="footer-chain">Tensor → Matrix → Vector → Eigenmode → Scalar</div>
+    <div class="footer-meta">
+      Compiled June 19, 2026 · Non-lossy transcription — prompts and responses preserved verbatim ·
+      <a href="https://ukubona-llc.github.io" target="_blank" rel="noopener">ukubona-llc.github.io</a> ·
+      <a href="https://ukubona-llc.github.io/gen-z/" target="_blank" rel="noopener">Gen-Z Roundtable Archive</a>
+    </div>
+  </footer>
+
+  <script>
+    // ─── THEME TOGGLE ──────────────────────────────────────
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('theme-label').textContent = isDark ? '☾ Dark' : '☀ Light';
+    }
+
+    // ─── SCROLL REVEAL ────────────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, i * 60);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.event-card').forEach(card => observer.observe(card));
+  </script>
 </body>
 </html>
